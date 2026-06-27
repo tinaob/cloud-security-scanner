@@ -1,0 +1,42 @@
+{
+    "scan_date": "20260627_154619",
+    "total_checks": 6,
+    "findings": [
+        {
+            "check": "Root Account MFA",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "Root account MFA is enabled"
+        },
+        {
+            "check": "Root Account Usage",
+            "status": "FAIL",
+            "risk": "MEDIUM",
+            "detail": "Root account was used on 2026-06-27T13:23:33Z"
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User security-scanner has no MFA device"
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User tina has no MFA device"
+        },
+        {
+            "check": "Access Key Age",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "User security-scanner key is 0 days old"
+        },
+        {
+            "check": "S3 Public Access",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "No S3 buckets exist in this account"
+        }
+    ]
+}
