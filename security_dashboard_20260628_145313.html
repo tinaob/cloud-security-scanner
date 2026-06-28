@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AWS Cloud Security Assessment Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f6fa; }
+        .header { background: #2c3e50; color: white; padding: 30px; border-radius: 8px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0; color: #bdc3c7; }
+        .score-box { background: white; border-radius: 8px; padding: 30px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .score-number { font-size: 72px; font-weight: bold; color: #e74c3c; }
+        .score-label { font-size: 18px; color: #e74c3c; font-weight: bold; }
+        .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .card { background: white; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-number { font-size: 36px; font-weight: bold; }
+        .card-label { font-size: 14px; color: #666; margin-top: 5px; }
+        .high { color: #e74c3c; }
+        .medium { color: #f39c12; }
+        .low { color: #3498db; }
+        .pass { color: #27ae60; }
+        .table-box { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #2c3e50; color: white; padding: 12px; text-align: left; font-size: 13px; }
+        td { padding: 10px 12px; border-bottom: 1px solid #ecf0f1; font-size: 13px; vertical-align: top; }
+        tr:hover { background: #f8f9fa; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>☁️ AWS Cloud Security Assessment Report</h1>
+        <p>Generated: 2026-06-28 14:53:13 | Tool: Cloud Security Assessment Tool v2.0</p>
+        <p>Built by Clementina Obasi — Cybersecurity Portfolio Project</p>
+    </div>
+
+    <div class="score-box">
+        <div class="score-number">25/100</div>
+        <div class="score-label">Security Score — POOR</div>
+        <p style="color:#666;margin-top:10px;">Based on CIS AWS Foundations Benchmark controls</p>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <div class="card-number high">2</div>
+            <div class="card-label">High Risk</div>
+        </div>
+        <div class="card">
+            <div class="card-number medium">1</div>
+            <div class="card-label">Medium Risk</div>
+        </div>
+        <div class="card">
+            <div class="card-number low">0</div>
+            <div class="card-label">Low Risk</div>
+        </div>
+        <div class="card">
+            <div class="card-number pass">5</div>
+            <div class="card-label">Passed</div>
+        </div>
+    </div>
+
+    <div class="table-box">
+        <h2 style="margin-top:0;">Detailed Findings</h2>
+        <table>
+            <tr>
+                <th>Check</th>
+                <th>Risk</th>
+                <th>Detail</th>
+                <th>CIS Control</th>
+                <th>Remediation</th>
+            </tr>
+            
+        <tr>
+            <td>✅ Root Account MFA</td>
+            <td><span style="background:#27ae60;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">PASS</span></td>
+            <td>Root account MFA is enabled</td>
+            <td style="font-size:12px;color:#666;">CIS 1.5  — Enable MFA for root account</td>
+            <td style="font-size:12px;">Go to AWS Console → IAM → Security credentials → Activate MFA. Use a virtual MFA...</td>
+        </tr>
+        
+        <tr>
+            <td>⚠️ Root Account Usage</td>
+            <td><span style="background:#f39c12;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">MEDIUM</span></td>
+            <td>Root account was used on 2026-06-28T12:39:42Z</td>
+            <td style="font-size:12px;color:#666;">CIS 1.7  — Eliminate use of root account</td>
+            <td style="font-size:12px;">Create an IAM user with appropriate permissions for daily tasks. Only use root f...</td>
+        </tr>
+        
+        <tr>
+            <td>🔴 IAM User MFA</td>
+            <td><span style="background:#e74c3c;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">HIGH</span></td>
+            <td>User security-scanner has no MFA device</td>
+            <td style="font-size:12px;color:#666;">CIS 1.10 — Enable MFA for all IAM users</td>
+            <td style="font-size:12px;">Go to IAM → Users → Select user → Security credentials → Assign MFA device. Enfo...</td>
+        </tr>
+        
+        <tr>
+            <td>🔴 IAM User MFA</td>
+            <td><span style="background:#e74c3c;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">HIGH</span></td>
+            <td>User tina has no MFA device</td>
+            <td style="font-size:12px;color:#666;">CIS 1.10 — Enable MFA for all IAM users</td>
+            <td style="font-size:12px;">Go to IAM → Users → Select user → Security credentials → Assign MFA device. Enfo...</td>
+        </tr>
+        
+        <tr>
+            <td>✅ Access Key Age</td>
+            <td><span style="background:#27ae60;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">PASS</span></td>
+            <td>User security-scanner key is 1 days old</td>
+            <td style="font-size:12px;color:#666;">CIS 1.14 — Rotate access keys every 90 days</td>
+            <td style="font-size:12px;">Go to IAM → Users → Security credentials → Create new access key, update all app...</td>
+        </tr>
+        
+        <tr>
+            <td>✅ S3 Public Access</td>
+            <td><span style="background:#27ae60;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">PASS</span></td>
+            <td>No S3 buckets exist in this account</td>
+            <td style="font-size:12px;color:#666;">CIS 2.1  — Ensure S3 bucket not publicly accessible</td>
+            <td style="font-size:12px;">Go to S3 → Select bucket → Permissions → Block public access → Enable all four b...</td>
+        </tr>
+        
+        <tr>
+            <td>✅ IAM Admin Policy</td>
+            <td><span style="background:#27ae60;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">PASS</span></td>
+            <td>User security-scanner has appropriate policy: ReadOnlyAccess</td>
+            <td style="font-size:12px;color:#666;">CIS 1.16 — Ensure IAM policies not attached directly</td>
+            <td style="font-size:12px;">Remove AdministratorAccess from IAM users directly. Instead create an IAM group ...</td>
+        </tr>
+        
+        <tr>
+            <td>✅ Security Group</td>
+            <td><span style="background:#27ae60;color:white;padding:3px 8px;border-radius:4px;font-size:12px;">PASS</span></td>
+            <td>No security groups expose dangerous ports to the internet</td>
+            <td style="font-size:12px;color:#666;">CIS 5.2  — No security groups allow 0.0.0.0/0 on sensitive ports</td>
+            <td style="font-size:12px;">Go to EC2 → Security Groups → Edit inbound rules → Replace 0.0.0.0/0 source with...</td>
+        </tr>
+        
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>AWS Cloud Security Assessment Tool v2.0 | 
+        Built as part of Clementina Obasi's Cybersecurity Portfolio | 
+        github.com/tinaob/cloud-security-scanner</p>
+    </div>
+</body>
+</html>
+    

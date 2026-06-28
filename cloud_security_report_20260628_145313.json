@@ -1,0 +1,77 @@
+{
+    "scan_date": "20260628_145313",
+    "tool": "Cloud Security Assessment Tool v2.0",
+    "security_score": 25,
+    "summary": {
+        "total_checks": 8,
+        "high_risk": 2,
+        "medium_risk": 1,
+        "passed": 5
+    },
+    "findings": [
+        {
+            "check": "Root Account MFA",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "Root account MFA is enabled",
+            "cis_control": "CIS 1.5  \u2014 Enable MFA for root account",
+            "remediation": "Go to AWS Console \u2192 IAM \u2192 Security credentials \u2192 Activate MFA. Use a virtual MFA app like Google Authenticator."
+        },
+        {
+            "check": "Root Account Usage",
+            "status": "FAIL",
+            "risk": "MEDIUM",
+            "detail": "Root account was used on 2026-06-28T12:39:42Z",
+            "cis_control": "CIS 1.7  \u2014 Eliminate use of root account",
+            "remediation": "Create an IAM user with appropriate permissions for daily tasks. Only use root for account-level tasks that require it."
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User security-scanner has no MFA device",
+            "cis_control": "CIS 1.10 \u2014 Enable MFA for all IAM users",
+            "remediation": "Go to IAM \u2192 Users \u2192 Select user \u2192 Security credentials \u2192 Assign MFA device. Enforce MFA using an IAM policy."
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User tina has no MFA device",
+            "cis_control": "CIS 1.10 \u2014 Enable MFA for all IAM users",
+            "remediation": "Go to IAM \u2192 Users \u2192 Select user \u2192 Security credentials \u2192 Assign MFA device. Enforce MFA using an IAM policy."
+        },
+        {
+            "check": "Access Key Age",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "User security-scanner key is 1 days old",
+            "cis_control": "CIS 1.14 \u2014 Rotate access keys every 90 days",
+            "remediation": "Go to IAM \u2192 Users \u2192 Security credentials \u2192 Create new access key, update all applications using the old key, then deactivate and delete the old key."
+        },
+        {
+            "check": "S3 Public Access",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "No S3 buckets exist in this account",
+            "cis_control": "CIS 2.1  \u2014 Ensure S3 bucket not publicly accessible",
+            "remediation": "Go to S3 \u2192 Select bucket \u2192 Permissions \u2192 Block public access \u2192 Enable all four block public access settings."
+        },
+        {
+            "check": "IAM Admin Policy",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "User security-scanner has appropriate policy: ReadOnlyAccess",
+            "cis_control": "CIS 1.16 \u2014 Ensure IAM policies not attached directly",
+            "remediation": "Remove AdministratorAccess from IAM users directly. Instead create an IAM group with required permissions and add users to the group."
+        },
+        {
+            "check": "Security Group",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "No security groups expose dangerous ports to the internet",
+            "cis_control": "CIS 5.2  \u2014 No security groups allow 0.0.0.0/0 on sensitive ports",
+            "remediation": "Go to EC2 \u2192 Security Groups \u2192 Edit inbound rules \u2192 Replace 0.0.0.0/0 source with specific IP ranges or security group IDs."
+        }
+    ]
+}
