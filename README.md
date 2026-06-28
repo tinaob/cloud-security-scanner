@@ -59,6 +59,8 @@ Management (CSPM) tools like Prisma Cloud and Wiz.
 
 ## HTML Dashboard Preview
 
+![Dashboard Screenshot](dashboard_screenshot.png)
+
 The tool generates a professional HTML dashboard showing:
 - Overall security score out of 100
 - Colour-coded finding cards (High/Medium/Low/Pass)
