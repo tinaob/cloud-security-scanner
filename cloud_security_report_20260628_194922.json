@@ -1,0 +1,86 @@
+{
+    "scan_date": "20260628_194922",
+    "tool": "Cloud Security Assessment Tool v3.0",
+    "ai_powered": true,
+    "security_score": 25,
+    "summary": {
+        "total_checks": 8,
+        "high_risk": 2,
+        "medium_risk": 1,
+        "passed": 5
+    },
+    "findings": [
+        {
+            "check": "Root Account MFA",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "Root account MFA is enabled",
+            "cis_control": "CIS 1.5  \u2014 Enable MFA for root account",
+            "remediation": "Go to AWS Console \u2192 IAM \u2192 Security credentials \u2192 Activate MFA. Use a virtual MFA app like Google Authenticator.",
+            "ai_explanation": ""
+        },
+        {
+            "check": "Root Account Usage",
+            "status": "FAIL",
+            "risk": "MEDIUM",
+            "detail": "Root account was used on 2026-06-28T12:39:42Z",
+            "cis_control": "CIS 1.7  \u2014 Eliminate use of root account",
+            "remediation": "Create an IAM user with appropriate permissions for daily tasks. Only use root for account-level tasks that require it.",
+            "ai_explanation": "**Root Account Usage Detected**\n\nYour cloud environment has a \"master key\" account \u2014 called the root account \u2014 that has unlimited access to everything, and it was used recently when it should almost never be needed for day-to-day work. If this goes unaddressed, any attacker who gains access to this account could take complete, unrestricted control of your entire cloud environment, including deleting data, running up massive costs, or locking out your entire team. Fixing this matters because limiting root account use is one of the most fundamental ways to protect your business from a catastrophic breach \u2014 routine tasks should always be performed through individual accounts with only the permissions they specifically need."
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User security-scanner has no MFA device",
+            "cis_control": "CIS 1.10 \u2014 Enable MFA for all IAM users",
+            "remediation": "Go to IAM \u2192 Users \u2192 Select user \u2192 Security credentials \u2192 Assign MFA device. Enforce MFA using an IAM policy.",
+            "ai_explanation": "**What This Means:** The cloud user account named \"security-scanner\" is currently protected by only a username and password, with no second layer of verification required to log in.\n\n**What Could Go Wrong:** If an attacker obtains or guesses this account's password \u2014 through phishing, a data breach, or brute force \u2014 they would have immediate, unrestricted access to your cloud environment with nothing stopping them.\n\n**Why It Matters:** Adding Multi-Factor Authentication (MFA) means that even a stolen password is useless on its own, dramatically reducing the risk of an unauthorized takeover of this account and the damage that could follow."
+        },
+        {
+            "check": "IAM User MFA",
+            "status": "FAIL",
+            "risk": "HIGH",
+            "detail": "User tina has no MFA device",
+            "cis_control": "CIS 1.10 \u2014 Enable MFA for all IAM users",
+            "remediation": "Go to IAM \u2192 Users \u2192 Select user \u2192 Security credentials \u2192 Assign MFA device. Enforce MFA using an IAM policy.",
+            "ai_explanation": "**User Account Missing Extra Login Protection**\n\nTina's cloud account is currently protected by only a password, with no second layer of verification required to log in. If her password were ever stolen, guessed, or leaked, an attacker could gain immediate, unrestricted access to your cloud environment with nothing standing in the way. Adding multi-factor authentication (MFA) \u2014 a simple one-time code from a phone app \u2014 means that even a compromised password alone is useless to an attacker, significantly reducing the risk of an unauthorized breach."
+        },
+        {
+            "check": "Access Key Age",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "User security-scanner key is 1 days old",
+            "cis_control": "CIS 1.14 \u2014 Rotate access keys every 90 days",
+            "remediation": "Go to IAM \u2192 Users \u2192 Security credentials \u2192 Create new access key, update all applications using the old key, then deactivate and delete the old key.",
+            "ai_explanation": ""
+        },
+        {
+            "check": "S3 Public Access",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "No S3 buckets exist in this account",
+            "cis_control": "CIS 2.1  \u2014 Ensure S3 bucket not publicly accessible",
+            "remediation": "Go to S3 \u2192 Select bucket \u2192 Permissions \u2192 Block public access \u2192 Enable all four block public access settings.",
+            "ai_explanation": ""
+        },
+        {
+            "check": "IAM Admin Policy",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "User security-scanner has appropriate policy: ReadOnlyAccess",
+            "cis_control": "CIS 1.16 \u2014 Ensure IAM policies not attached directly",
+            "remediation": "Remove AdministratorAccess from IAM users directly. Instead create an IAM group with required permissions and add users to the group.",
+            "ai_explanation": ""
+        },
+        {
+            "check": "Security Group",
+            "status": "PASS",
+            "risk": "NONE",
+            "detail": "No security groups expose dangerous ports to internet",
+            "cis_control": "CIS 5.2  \u2014 No security groups allow 0.0.0.0/0 on sensitive ports",
+            "remediation": "Go to EC2 \u2192 Security Groups \u2192 Edit inbound rules \u2192 Replace 0.0.0.0/0 source with specific IP ranges or security group IDs.",
+            "ai_explanation": ""
+        }
+    ]
+}

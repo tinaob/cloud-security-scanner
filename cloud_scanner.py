@@ -1,12 +1,18 @@
 import boto3
 import json
 import os
+import anthropic
 from datetime import datetime, timezone
 
 # ============================================
+# YOUR ANTHROPIC API KEY
+# Set this as environment variable before running:
+# $env:ANTHROPIC_API_KEY="your-key-here"
+# ============================================
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
+# ============================================
 # CIS BENCHMARK MAPPING
-# Maps each check to its CIS AWS Foundations
-# Benchmark control number
 # ============================================
 CIS_MAPPING = {
     "Root Account MFA":         "CIS 1.5  — Enable MFA for root account",
@@ -21,37 +27,29 @@ CIS_MAPPING = {
 
 # ============================================
 # REMEDIATION RECOMMENDATIONS
-# Specific fix instructions for each check
 # ============================================
 REMEDIATION = {
     "Root Account MFA":
         "Go to AWS Console → IAM → Security credentials → "
         "Activate MFA. Use a virtual MFA app like Google Authenticator.",
-
     "Root Account Usage":
         "Create an IAM user with appropriate permissions for daily tasks. "
         "Only use root for account-level tasks that require it.",
-
     "IAM User MFA":
         "Go to IAM → Users → Select user → Security credentials → "
         "Assign MFA device. Enforce MFA using an IAM policy.",
-
     "Access Key Age":
         "Go to IAM → Users → Security credentials → Create new access key, "
         "update all applications using the old key, then deactivate and delete the old key.",
-
     "S3 Public Access":
         "Go to S3 → Select bucket → Permissions → Block public access → "
         "Enable all four block public access settings.",
-
     "IAM Admin Policy":
         "Remove AdministratorAccess from IAM users directly. "
         "Instead create an IAM group with required permissions and add users to the group.",
-
     "Security Group":
         "Go to EC2 → Security Groups → Edit inbound rules → "
         "Replace 0.0.0.0/0 source with specific IP ranges or security group IDs.",
-
     "S3 Encryption":
         "Go to S3 → Select bucket → Properties → Default encryption → "
         "Enable with SSE-S3 or SSE-KMS encryption.",
@@ -59,7 +57,6 @@ REMEDIATION = {
 
 # ============================================
 # RISK SCORING
-# Each finding type has a base risk score
 # ============================================
 RISK_SCORES = {
     "HIGH":   30,
@@ -73,7 +70,7 @@ RISK_SCORES = {
 # ============================================
 def connect_to_aws():
     print("\n" + "=" * 60)
-    print("   AWS CLOUD SECURITY ASSESSMENT TOOL v2.0")
+    print("   AWS CLOUD SECURITY ASSESSMENT TOOL v3.0")
     print("=" * 60)
     print("\n🔌 Connecting to AWS...\n")
 
@@ -90,6 +87,41 @@ def connect_to_aws():
     except Exception as e:
         print(f"❌ Connection failed: {e}")
         return None, None, None
+
+# ============================================
+# AI EXPLANATION GENERATOR
+# ============================================
+def get_ai_explanation(finding):
+    if not ANTHROPIC_API_KEY:
+        return "AI explanation unavailable — set ANTHROPIC_API_KEY environment variable"
+
+    try:
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+        prompt = f"""You are a cloud security expert explaining findings to a business audience.
+        
+Finding: {finding['check']}
+Detail: {finding['detail']}
+Risk Level: {finding['risk']}
+CIS Control: {finding['cis_control']}
+
+Write a 2-3 sentence plain English explanation of:
+1. What this security finding means in simple terms
+2. What could happen if this is not fixed
+3. Why fixing it matters
+
+Keep it concise, clear, and non-technical. No bullet points."""
+
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=150,
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        return message.content[0].text
+
+    except Exception as e:
+        return f"AI explanation unavailable: {str(e)[:50]}"
 
 # ============================================
 # STEP 2: Check root account
@@ -305,7 +337,6 @@ def check_s3_public_access(s3):
 
             except Exception:
                 print(f"🔴 HIGH: Bucket '{bucket_name}' has no access block!")
-                print(f"   Fix: {REMEDIATION['S3 Public Access']}\n")
                 findings.append(make_finding(
                     "S3 Public Access", "FAIL", "HIGH",
                     f"Bucket {bucket_name} has no public access block"
@@ -318,7 +349,7 @@ def check_s3_public_access(s3):
     return findings
 
 # ============================================
-# STEP 6: NEW — Check IAM admin policies
+# STEP 6: Check IAM admin policies
 # ============================================
 def check_iam_admin_policies(iam):
     print("=" * 60)
@@ -349,7 +380,6 @@ def check_iam_admin_policies(iam):
                     ))
                 elif 'FullAccess' in policy_name:
                     print(f"🟡 MEDIUM: User '{username}' has {policy_name}")
-                    print(f"   Consider replacing with least-privilege policy\n")
                     findings.append(make_finding(
                         "IAM Admin Policy", "WARN", "MEDIUM",
                         f"User {username} has broad policy: {policy_name}"
@@ -368,7 +398,7 @@ def check_iam_admin_policies(iam):
     return findings
 
 # ============================================
-# STEP 7: NEW — Check security groups
+# STEP 7: Check security groups
 # ============================================
 def check_security_groups(ec2):
     print("=" * 60)
@@ -377,12 +407,8 @@ def check_security_groups(ec2):
 
     findings = []
     dangerous_ports = {
-        22: "SSH",
-        3389: "RDP",
-        3306: "MySQL",
-        1433: "MSSQL",
-        5432: "PostgreSQL",
-        27017: "MongoDB",
+        22: "SSH", 3389: "RDP", 3306: "MySQL",
+        1433: "MSSQL", 5432: "PostgreSQL", 27017: "MongoDB",
     }
 
     try:
@@ -395,7 +421,6 @@ def check_security_groups(ec2):
 
             for rule in sg.get('IpPermissions', []):
                 from_port = rule.get('FromPort', 0)
-                to_port = rule.get('ToPort', 65535)
 
                 for ip_range in rule.get('IpRanges', []):
                     cidr = ip_range.get('CidrIp', '')
@@ -403,19 +428,10 @@ def check_security_groups(ec2):
                     if cidr == '0.0.0.0/0':
                         if from_port in dangerous_ports:
                             service = dangerous_ports[from_port]
-                            print(f"🔴 HIGH: Security group '{sg_name}' ({sg_id})")
-                            print(f"   Port {from_port} ({service}) open to ALL internet!")
-                            print(f"   CIS: {CIS_MAPPING['Security Group']}")
-                            print(f"   Fix: {REMEDIATION['Security Group']}\n")
+                            print(f"🔴 HIGH: SG '{sg_name}' port {from_port} ({service}) open to internet!")
                             findings.append(make_finding(
                                 "Security Group", "FAIL", "HIGH",
                                 f"SG {sg_name} exposes port {from_port} ({service}) to 0.0.0.0/0"
-                            ))
-                        elif from_port == 0 and to_port == 65535:
-                            print(f"🔴 HIGH: Security group '{sg_name}' opens ALL ports!")
-                            findings.append(make_finding(
-                                "Security Group", "FAIL", "HIGH",
-                                f"SG {sg_name} opens all ports to 0.0.0.0/0"
                             ))
                         else:
                             print(f"🟡 MEDIUM: SG '{sg_name}' port {from_port} open to internet")
@@ -428,7 +444,7 @@ def check_security_groups(ec2):
             print("✅ PASS: No dangerous security group rules found\n")
             findings.append(make_finding(
                 "Security Group", "PASS", "NONE",
-                "No security groups expose dangerous ports to the internet"
+                "No security groups expose dangerous ports to internet"
             ))
 
     except Exception as e:
@@ -438,7 +454,7 @@ def check_security_groups(ec2):
     return findings
 
 # ============================================
-# STEP 8: NEW — Check S3 encryption
+# STEP 8: Check S3 encryption
 # ============================================
 def check_s3_encryption(s3):
     print("=" * 60)
@@ -469,8 +485,6 @@ def check_s3_encryption(s3):
 
             except Exception:
                 print(f"🔴 HIGH: Bucket '{bucket_name}' has NO encryption!")
-                print(f"   CIS: {CIS_MAPPING['S3 Encryption']}")
-                print(f"   Fix: {REMEDIATION['S3 Encryption']}\n")
                 findings.append(make_finding(
                     "S3 Encryption", "FAIL", "HIGH",
                     f"Bucket {bucket_name} has no default encryption"
@@ -492,11 +506,34 @@ def make_finding(check, status, risk, detail):
         "risk": risk,
         "detail": detail,
         "cis_control": CIS_MAPPING.get(check, "N/A"),
-        "remediation": REMEDIATION.get(check, "See AWS documentation")
+        "remediation": REMEDIATION.get(check, "See AWS documentation"),
+        "ai_explanation": ""
     }
 
 # ============================================
-# STEP 9: Calculate risk score
+# STEP 9: Add AI explanations to failed findings
+# ============================================
+def add_ai_explanations(findings):
+    failed = [f for f in findings if f['status'] in ['FAIL', 'WARN']]
+
+    if not failed:
+        return findings
+
+    print("=" * 60)
+    print("GENERATING AI EXPLANATIONS...")
+    print("=" * 60)
+
+    for finding in findings:
+        if finding['status'] in ['FAIL', 'WARN']:
+            print(f"💡 Getting AI explanation for: {finding['check']}...")
+            explanation = get_ai_explanation(finding)
+            finding['ai_explanation'] = explanation
+            print(f"   {explanation}\n")
+
+    return findings
+
+# ============================================
+# STEP 10: Calculate risk score
 # ============================================
 def calculate_risk_score(findings):
     total_deductions = sum(
@@ -504,11 +541,10 @@ def calculate_risk_score(findings):
         for f in findings
         if f['status'] in ['FAIL', 'WARN']
     )
-    score = max(0, 100 - total_deductions)
-    return score
+    return max(0, 100 - total_deductions)
 
 # ============================================
-# STEP 10: Generate HTML dashboard
+# STEP 11: Generate HTML dashboard with AI
 # ============================================
 def generate_html_dashboard(findings, score):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -518,15 +554,8 @@ def generate_html_dashboard(findings, score):
     low = [f for f in findings if f['risk'] == 'LOW']
     passed = [f for f in findings if f['status'] == 'PASS']
 
-    if score >= 80:
-        score_color = "#27ae60"
-        score_label = "GOOD"
-    elif score >= 60:
-        score_color = "#f39c12"
-        score_label = "MODERATE"
-    else:
-        score_color = "#e74c3c"
-        score_label = "POOR"
+    score_color = "#27ae60" if score >= 80 else "#f39c12" if score >= 60 else "#e74c3c"
+    score_label = "GOOD" if score >= 80 else "MODERATE" if score >= 60 else "POOR"
 
     findings_rows = ""
     for f in findings:
@@ -541,9 +570,13 @@ def generate_html_dashboard(findings, score):
 
         status_icon = "✅" if f['status'] == 'PASS' else "🔴" if f['risk'] == 'HIGH' else "⚠️"
 
+        ai_cell = ""
+        if f.get('ai_explanation'):
+            ai_cell = f'<br><span style="color:#2980b9;font-style:italic;font-size:11px;">💡 {f["ai_explanation"]}</span>'
+
         findings_rows += f"""
         <tr>
-            <td>{status_icon} {f['check']}</td>
+            <td>{status_icon} {f['check']}{ai_cell}</td>
             <td>{risk_badge}</td>
             <td>{f['detail']}</td>
             <td style="font-size:12px;color:#666;">{f['cis_control']}</td>
@@ -569,11 +602,10 @@ def generate_html_dashboard(findings, score):
         .card {{ background: white; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
         .card-number {{ font-size: 36px; font-weight: bold; }}
         .card-label {{ font-size: 14px; color: #666; margin-top: 5px; }}
-        .high {{ color: #e74c3c; }}
-        .medium {{ color: #f39c12; }}
-        .low {{ color: #3498db; }}
-        .pass {{ color: #27ae60; }}
+        .high {{ color: #e74c3c; }} .medium {{ color: #f39c12; }}
+        .low {{ color: #3498db; }} .pass {{ color: #27ae60; }}
         .table-box {{ background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .ai-badge {{ background: #2980b9; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-left: 5px; }}
         table {{ width: 100%; border-collapse: collapse; }}
         th {{ background: #2c3e50; color: white; padding: 12px; text-align: left; font-size: 13px; }}
         td {{ padding: 10px 12px; border-bottom: 1px solid #ecf0f1; font-size: 13px; vertical-align: top; }}
@@ -584,8 +616,9 @@ def generate_html_dashboard(findings, score):
 <body>
     <div class="header">
         <h1>☁️ AWS Cloud Security Assessment Report</h1>
-        <p>Generated: {timestamp} | Tool: Cloud Security Assessment Tool v2.0</p>
-        <p>Built by Clementina Obasi — Cybersecurity Portfolio Project</p>
+        <p>Generated: {timestamp} | Tool: Cloud Security Assessment Tool v3.0</p>
+        <p>Built by Clementina Obasi — Cybersecurity Portfolio Project 
+        <span class="ai-badge">✨ AI-Powered</span></p>
     </div>
 
     <div class="score-box">
@@ -595,41 +628,26 @@ def generate_html_dashboard(findings, score):
     </div>
 
     <div class="cards">
-        <div class="card">
-            <div class="card-number high">{len(high)}</div>
-            <div class="card-label">High Risk</div>
-        </div>
-        <div class="card">
-            <div class="card-number medium">{len(medium)}</div>
-            <div class="card-label">Medium Risk</div>
-        </div>
-        <div class="card">
-            <div class="card-number low">{len(low)}</div>
-            <div class="card-label">Low Risk</div>
-        </div>
-        <div class="card">
-            <div class="card-number pass">{len(passed)}</div>
-            <div class="card-label">Passed</div>
-        </div>
+        <div class="card"><div class="card-number high">{len(high)}</div><div class="card-label">High Risk</div></div>
+        <div class="card"><div class="card-number medium">{len(medium)}</div><div class="card-label">Medium Risk</div></div>
+        <div class="card"><div class="card-number low">{len(low)}</div><div class="card-label">Low Risk</div></div>
+        <div class="card"><div class="card-number pass">{len(passed)}</div><div class="card-label">Passed</div></div>
     </div>
 
     <div class="table-box">
-        <h2 style="margin-top:0;">Detailed Findings</h2>
+        <h2 style="margin-top:0;">Detailed Findings <span class="ai-badge">✨ AI Explanations</span></h2>
         <table>
             <tr>
-                <th>Check</th>
-                <th>Risk</th>
-                <th>Detail</th>
-                <th>CIS Control</th>
-                <th>Remediation</th>
+                <th>Check</th><th>Risk</th><th>Detail</th>
+                <th>CIS Control</th><th>Remediation</th>
             </tr>
             {findings_rows}
         </table>
     </div>
 
     <div class="footer">
-        <p>AWS Cloud Security Assessment Tool v2.0 | 
-        Built as part of Clementina Obasi's Cybersecurity Portfolio | 
+        <p>AWS Cloud Security Assessment Tool v3.0 | AI-Powered |
+        Built as part of Clementina Obasi's Cybersecurity Portfolio |
         github.com/tinaob/cloud-security-scanner</p>
     </div>
 </body>
@@ -644,7 +662,7 @@ def generate_html_dashboard(findings, score):
     return filename
 
 # ============================================
-# STEP 11: Save JSON report
+# STEP 12: Save JSON report
 # ============================================
 def save_json_report(findings, score):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -657,7 +675,8 @@ def save_json_report(findings, score):
     with open(filename, 'w') as f:
         json.dump({
             "scan_date": timestamp,
-            "tool": "Cloud Security Assessment Tool v2.0",
+            "tool": "Cloud Security Assessment Tool v3.0",
+            "ai_powered": True,
             "security_score": score,
             "summary": {
                 "total_checks": len(findings),
@@ -672,7 +691,7 @@ def save_json_report(findings, score):
     return filename
 
 # ============================================
-# STEP 12: Show final summary
+# STEP 13: Show final summary
 # ============================================
 def show_summary(findings, score):
     high = [f for f in findings if f['risk'] == 'HIGH' and f['status'] == 'FAIL']
@@ -702,7 +721,8 @@ def show_summary(findings, score):
         for f in high:
             print(f"  [{f['cis_control']}]")
             print(f"   {f['detail']}")
-            print(f"   Fix: {f['remediation'][:70]}...")
+            if f.get('ai_explanation'):
+                print(f"   💡 {f['ai_explanation'][:100]}...")
 
     print("\n" + "=" * 60)
     print("   SCAN COMPLETE")
@@ -725,6 +745,8 @@ def main():
     all_findings += check_iam_admin_policies(iam)
     all_findings += check_security_groups(ec2)
     all_findings += check_s3_encryption(s3)
+
+    all_findings = add_ai_explanations(all_findings)
 
     score = calculate_risk_score(all_findings)
     show_summary(all_findings, score)
