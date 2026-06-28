@@ -729,6 +729,227 @@ def show_summary(findings, score):
     print("=" * 60 + "\n")
 
 # ============================================
+# PDF EXPORT
+# ============================================
+def generate_pdf_report(findings, score):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"cloud_security_report_{timestamp}.pdf"
+
+    doc = SimpleDocTemplate(
+        filename,
+        pagesize=A4,
+        rightMargin=20*mm,
+        leftMargin=20*mm,
+        topMargin=20*mm,
+        bottomMargin=20*mm
+    )
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    # ---- Title ----
+    title_style = ParagraphStyle(
+        'Title',
+        parent=styles['Title'],
+        fontSize=20,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceAfter=6,
+        alignment=TA_CENTER
+    )
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#7f8c8d'),
+        spaceAfter=4,
+        alignment=TA_CENTER
+    )
+    heading_style = ParagraphStyle(
+        'Heading',
+        parent=styles['Heading2'],
+        fontSize=13,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceBefore=12,
+        spaceAfter=6
+    )
+    normal_style = ParagraphStyle(
+        'Body',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.HexColor('#2c3e50'),
+        spaceAfter=4
+    )
+    ai_style = ParagraphStyle(
+        'AI',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.HexColor('#2980b9'),
+        spaceAfter=4,
+        leftIndent=10
+    )
+
+    # ---- Header ----
+    story.append(Paragraph("☁️ AWS Cloud Security Assessment Report", title_style))
+    story.append(Paragraph("Cloud Security Assessment Tool v3.0 — AI-Powered", subtitle_style))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", subtitle_style))
+    story.append(Paragraph("Built by Clementina Obasi — Cybersecurity Portfolio", subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#2c3e50')))
+    story.append(Spacer(1, 8*mm))
+
+    # ---- Security Score ----
+    if score >= 80:
+        score_color = colors.HexColor('#27ae60')
+        score_label = "GOOD"
+    elif score >= 60:
+        score_color = colors.HexColor('#f39c12')
+        score_label = "MODERATE"
+    else:
+        score_color = colors.HexColor('#e74c3c')
+        score_label = "POOR"
+
+    score_style = ParagraphStyle(
+        'Score',
+        parent=styles['Normal'],
+        fontSize=36,
+        textColor=score_color,
+        alignment=TA_CENTER,
+        spaceAfter=4
+    )
+    score_label_style = ParagraphStyle(
+        'ScoreLabel',
+        parent=styles['Normal'],
+        fontSize=14,
+        textColor=score_color,
+        alignment=TA_CENTER,
+        spaceAfter=4
+    )
+
+    story.append(Paragraph(f"{score}/100", score_style))
+    story.append(Paragraph(f"Security Score — {score_label}", score_label_style))
+    story.append(Paragraph("Based on CIS AWS Foundations Benchmark controls", subtitle_style))
+    story.append(Spacer(1, 8*mm))
+
+    # ---- Summary Table ----
+    high = [f for f in findings if f['risk'] == 'HIGH' and f['status'] == 'FAIL']
+    medium = [f for f in findings if f['risk'] == 'MEDIUM']
+    low = [f for f in findings if f['risk'] == 'LOW']
+    passed = [f for f in findings if f['status'] == 'PASS']
+
+    summary_data = [
+        ['Total Checks', 'Passed', 'High Risk', 'Medium Risk', 'Low Risk'],
+        [str(len(findings)), str(len(passed)), str(len(high)), str(len(medium)), str(len(low))]
+    ]
+
+    summary_table = Table(summary_data, colWidths=[35*mm, 35*mm, 35*mm, 35*mm, 35*mm])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, 1), 14),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f8f9fa')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#bdc3c7')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TEXTCOLOR', (2, 1), (2, 1), colors.HexColor('#e74c3c')),
+        ('TEXTCOLOR', (3, 1), (3, 1), colors.HexColor('#f39c12')),
+        ('TEXTCOLOR', (1, 1), (1, 1), colors.HexColor('#27ae60')),
+    ]))
+
+    story.append(summary_table)
+    story.append(Spacer(1, 8*mm))
+
+    # ---- Detailed Findings ----
+    story.append(Paragraph("Detailed Findings", heading_style))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#bdc3c7')))
+    story.append(Spacer(1, 4*mm))
+
+    findings_data = [['Check', 'Risk', 'Detail', 'CIS Control']]
+
+    for f in findings:
+        findings_data.append([
+            f['check'],
+            f['risk'],
+            Paragraph(f['detail'][:60], normal_style),
+            Paragraph(f['cis_control'][:40], normal_style)
+        ])
+
+    findings_table = Table(
+        findings_data,
+        colWidths=[45*mm, 20*mm, 65*mm, 45*mm]
+    )
+
+    table_style = [
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#bdc3c7')),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1),
+         [colors.HexColor('#f8f9fa'), colors.white]),
+    ]
+
+    for i, f in enumerate(findings[0:], start=1):
+        if f['risk'] == 'HIGH' and f['status'] == 'FAIL':
+            table_style.append(('TEXTCOLOR', (1, i), (1, i), colors.HexColor('#e74c3c')))
+        elif f['risk'] == 'MEDIUM':
+            table_style.append(('TEXTCOLOR', (1, i), (1, i), colors.HexColor('#f39c12')))
+        elif f['status'] == 'PASS':
+            table_style.append(('TEXTCOLOR', (1, i), (1, i), colors.HexColor('#27ae60')))
+
+    findings_table.setStyle(TableStyle(table_style))
+    story.append(findings_table)
+    story.append(Spacer(1, 8*mm))
+
+    # ---- AI Explanations ----
+    ai_findings = [f for f in findings if f.get('ai_explanation')]
+
+    if ai_findings:
+        story.append(Paragraph("AI-Generated Explanations", heading_style))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#bdc3c7')))
+        story.append(Spacer(1, 4*mm))
+
+        for f in ai_findings:
+            story.append(Paragraph(f"• {f['check']}", normal_style))
+            story.append(Paragraph(f"💡 {f['ai_explanation']}", ai_style))
+            story.append(Spacer(1, 3*mm))
+
+    # ---- Remediation ----
+    story.append(Paragraph("Remediation Recommendations", heading_style))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#bdc3c7')))
+    story.append(Spacer(1, 4*mm))
+
+    failed = [f for f in findings if f['status'] in ['FAIL', 'WARN']]
+    for f in failed:
+        story.append(Paragraph(f"• {f['check']} [{f['cis_control']}]", normal_style))
+        story.append(Paragraph(f"  {f['remediation']}", ai_style))
+        story.append(Spacer(1, 3*mm))
+
+    # ---- Footer ----
+    story.append(Spacer(1, 8*mm))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#bdc3c7')))
+    story.append(Paragraph(
+        "AWS Cloud Security Assessment Tool v3.0 | AI-Powered | "
+        "Built by Clementina Obasi | github.com/tinaob/cloud-security-scanner",
+        subtitle_style
+    ))
+
+    doc.build(story)
+    print(f"📋 PDF Report saved to: {filename}")
+    return filename
+# ============================================
 # MAIN: Run everything
 # ============================================
 def main():
@@ -752,5 +973,6 @@ def main():
     show_summary(all_findings, score)
     save_json_report(all_findings, score)
     generate_html_dashboard(all_findings, score)
+    generate_pdf_report(all_findings, score)
 
 main()
