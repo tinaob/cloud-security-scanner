@@ -1,4 +1,4 @@
-# AWS Cloud Security Assessment Tool v2.0 ☁️🔍
+# AWS Cloud Security Assessment Tool v3.0 
 
 A Python tool that performs automated security assessments of AWS 
 accounts, mapping findings to CIS AWS Foundations Benchmark controls, 
@@ -7,7 +7,7 @@ and a visual HTML dashboard.
 
 ---
 
-## ⚠️ Legal Warning
+##  Legal Warning
 
 Only scan AWS accounts you own or have explicit written permission 
 to audit. Unauthorized scanning of cloud accounts is illegal.
@@ -60,6 +60,7 @@ Management (CSPM) tools like Prisma Cloud and Wiz.
 ## HTML Dashboard Preview
 
 ![Dashboard Screenshot](dashboard_screenshot.png)
+![v3 Dashboard with AI](dashboard_v3_screenshot.png)
 
 The tool generates a professional HTML dashboard showing:
 - Overall security score out of 100
@@ -162,8 +163,7 @@ browser to see the visual dashboard.
 | Multi-account | ❌ | ✅ |
 | 500+ checks | ❌ | ✅ |
 | Real-time monitoring | ❌ | ✅ |
-| AI explanations | Planned | ✅ |
-
+| AI explanations | ✅ | ✅ |
 ---
 
 ## Author
