@@ -50,6 +50,10 @@ Management (CSPM) tools like Prisma Cloud and Wiz.
 - **HTML dashboard** — visual colour-coded security report
 - **JSON report** — machine-readable output for integration with 
   other tools
+- **AI-generated explanations** — Claude AI generates plain English 
+  explanations for every failed finding
+- **PDF report** — professional 2-page exportable PDF with findings, 
+  AI explanations and remediation steps
 
 ---
 
@@ -98,6 +102,8 @@ tool works correctly in a real environment.
 | CIS Benchmark | Industry standard control mapping |
 | HTML/CSS | Dashboard generation |
 | JSON | Structured report output |
+| Anthropic Claude API | AI-generated plain English explanations |
+| ReportLab | Professional PDF report generation |
 
 ---
 
@@ -144,8 +150,6 @@ browser to see the visual dashboard.
 
 - Currently scans one AWS account — future version will support 
   multi-account scanning across AWS Organizations
-- Does not yet generate PDF reports — planned for next version
-- Could add AI-generated plain-language explanations of each finding
 - Could integrate with AWS Security Hub for continuous monitoring
 - Future version will add email alerting for critical findings
 - Could expand to 50+ CIS controls for full benchmark coverage
@@ -164,6 +168,7 @@ browser to see the visual dashboard.
 | 500+ checks | ❌ | ✅ |
 | Real-time monitoring | ❌ | ✅ |
 | AI explanations | ✅ | ✅ |
+| PDF export      | ✅ | ✅ |
 ---
 
 ## Author
@@ -175,4 +180,5 @@ Cybersecurity Analyst | CySA+ | CCNA CyberOps | Google Cybersecurity Certified
 ---
 
 *Built as part of my cybersecurity portfolio — June 2026*
-*Version 2.0 — upgraded from basic scanner to full assessment tool*
+*Version 3.0 — AI-powered with PDF export, CIS benchmark mapping, 
+risk scoring and HTML dashboard*
